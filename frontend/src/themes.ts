@@ -1,0 +1,88 @@
+import { ThemeId, ThemeConfig } from './types';
+
+export const THEMES: Record<ThemeId, ThemeConfig> = {
+  studio: {
+    id: 'studio',
+    name: 'Studio Cream',
+    bgClass: 'bg-grid-studio',
+    isDark: false,
+    chassisBg: 'bg-[#E8E3D8]',
+    chassisBorder: 'border-[#18181B]',
+    chassisRivet: '#8A857A',
+    screenBg: 'bg-[#111215]',
+    screenBorder: 'border-[#27272A]',
+    textPrimary: 'text-[#18181B]',
+    textSecondary: 'text-[#52525B]',
+    textMuted: 'text-[#71717A]',
+    accentColor: '#FF4D1C', // Signal Orange
+    accentListening: '#16A34A', // Phosphor Emerald
+    accentThinking: '#F59E0B', // Warm Amber
+    deckBg: 'bg-[#EFEBE0]/90',
+    deckBorder: 'border-[#18181B]',
+    keycapDefault: 'bg-[#FAF8F5] text-[#18181B]',
+    keycapBorder: 'border-[#18181B]',
+    keycapShadow: 'shadow-[0_2px_0_#18181B]',
+    primaryKeycapBg: 'bg-[#FF4D1C] text-white',
+    primaryKeycapText: 'text-white',
+    primaryKeycapBorder: 'border-[#18181B]',
+    primaryKeycapShadow: 'shadow-[0_2px_0_#18181B]',
+    subtitleBg: 'bg-[#EAE5DA]/90',
+    subtitleBorder: 'border-[#18181B]',
+  },
+  midnight: {
+    id: 'midnight',
+    name: 'Midnight Espresso',
+    bgClass: 'bg-grid-midnight',
+    isDark: true,
+    chassisBg: 'bg-[#231E1B]',
+    chassisBorder: 'border-[#3D3530]',
+    chassisRivet: '#574C45',
+    screenBg: 'bg-[#0E0C0A]',
+    screenBorder: 'border-[#382E28]',
+    textPrimary: 'text-[#F5EFEB]',
+    textSecondary: 'text-[#B8AEA6]',
+    textMuted: 'text-[#857B73]',
+    accentColor: '#FBBF24', // Warm Honey Amber
+    accentListening: '#34D399', // Emerald
+    accentThinking: '#FB7185', // Coral
+    deckBg: 'bg-[#1F1A17]/95',
+    deckBorder: 'border-[#3D3530]',
+    keycapDefault: 'bg-[#2C2522] text-[#F5EFEB]',
+    keycapBorder: 'border-[#3D3530]',
+    keycapShadow: 'shadow-[0_2px_0_#120E0C]',
+    primaryKeycapBg: 'bg-[#FBBF24] text-[#161311]',
+    primaryKeycapText: 'text-[#161311]',
+    primaryKeycapBorder: 'border-[#3D3530]',
+    primaryKeycapShadow: 'shadow-[0_2px_0_#120E0C]',
+    subtitleBg: 'bg-[#231E1B]/95',
+    subtitleBorder: 'border-[#3D3530]',
+  },
+  matcha: {
+    id: 'matcha',
+    name: 'Botanical Matcha',
+    bgClass: 'bg-grid-matcha',
+    isDark: false,
+    chassisBg: 'bg-[#E4EAE1]',
+    chassisBorder: 'border-[#1F2D2A]',
+    chassisRivet: '#7F9389',
+    screenBg: 'bg-[#0D1513]',
+    screenBorder: 'border-[#1E332E]',
+    textPrimary: 'text-[#13221F]',
+    textSecondary: 'text-[#3E524D]',
+    textMuted: 'text-[#647C76]',
+    accentColor: '#E26A4B', // Warm Terracotta
+    accentListening: '#0F5E54', // Deep Forest Teal
+    accentThinking: '#D97706', // Amber
+    deckBg: 'bg-[#E9EFE6]/90',
+    deckBorder: 'border-[#1F2D2A]',
+    keycapDefault: 'bg-[#F4F7F2] text-[#13221F]',
+    keycapBorder: 'border-[#1F2D2A]',
+    keycapShadow: 'shadow-[0_2px_0_#1F2D2A]',
+    primaryKeycapBg: 'bg-[#0F5E54] text-white',
+    primaryKeycapText: 'text-white',
+    primaryKeycapBorder: 'border-[#1F2D2A]',
+    primaryKeycapShadow: 'shadow-[0_2px_0_#1F2D2A]',
+    subtitleBg: 'bg-[#E2EAE0]/90',
+    subtitleBorder: 'border-[#1F2D2A]',
+  },
+};

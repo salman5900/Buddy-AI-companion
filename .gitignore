@@ -1,0 +1,28 @@
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Node
+node_modules/
+dist/
+.DS_Store
+
+# Agent skills & cache
+.agents/
+skills-lock.json
+
+backend/.env
+.env
+backend/venv/
+frontend/node_modules/
