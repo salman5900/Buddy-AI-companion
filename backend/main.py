@@ -1,5 +1,6 @@
 import os
 import json
+import base64
 import asyncio
 import logging
 from typing import Optional
@@ -112,6 +113,21 @@ async def voice_websocket(
                                         ],
                                         turn_complete=True,
                                     )
+
+                                elif msg_type == "video_frame" and "data" in payload:
+                                    try:
+                                        raw_b64 = payload["data"]
+                                        if "," in raw_b64:
+                                            raw_b64 = raw_b64.split(",", 1)[1]
+                                        jpeg_bytes = base64.b64decode(raw_b64)
+                                        await session.send_realtime_input(
+                                            video=types.Blob(
+                                                data=jpeg_bytes,
+                                                mime_type="image/jpeg",
+                                            )
+                                        )
+                                    except Exception as e:
+                                        logger.warning("Error forwarding video frame to Gemini: %s", e)
 
                                 elif msg_type == "ping":
                                     # Immediate RTT heartbeat response

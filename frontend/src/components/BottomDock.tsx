@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
-import { Phone, PhoneOff, Mic, MicOff, Send, SlidersHorizontal, Volume2, Headphones } from 'lucide-react';
+import { Phone, PhoneOff, Mic, MicOff, Send, SlidersHorizontal, Volume2, Headphones, Video, VideoOff } from 'lucide-react';
 import { ConnectionState, ThemeConfig } from '../types';
 
 interface BottomDockProps {
   connectionState: ConnectionState;
   isMuted: boolean;
   isSpeakerMode: boolean;
+  isCameraActive: boolean;
   theme: ThemeConfig;
   onToggleConnect: () => void;
   onToggleMute: () => void;
   onToggleSpeakerMode: () => void;
+  onToggleCamera: () => void;
   onSendTextPrompt: (text: string) => void;
   onOpenSettings: () => void;
 }
@@ -18,10 +20,12 @@ export const BottomDock: React.FC<BottomDockProps> = ({
   connectionState,
   isMuted,
   isSpeakerMode,
+  isCameraActive,
   theme,
   onToggleConnect,
   onToggleMute,
   onToggleSpeakerMode,
+  onToggleCamera,
   onSendTextPrompt,
   onOpenSettings,
 }) => {
@@ -67,6 +71,21 @@ export const BottomDock: React.FC<BottomDockProps> = ({
             <span>ENGAGE</span>
           </>
         )}
+      </button>
+
+      {/* Real-Time Camera Vision Toggle Keycap */}
+      <button
+        onClick={onToggleCamera}
+        className={`tactile-btn p-2.5 rounded-xl border-[1.5px] border-b-[3px] transition-all flex items-center justify-center ${
+          isCameraActive
+            ? theme.isDark
+              ? 'bg-[#2E2723] text-[#FBBF24] border-[#FBBF24] shadow-[0_2px_0_#FBBF24]'
+              : 'bg-[#FAF8F5] text-[#FF4D1C] border-[#FF4D1C] shadow-[0_2px_0_#FF4D1C]'
+            : `${theme.keycapDefault} ${theme.keycapBorder} ${theme.keycapShadow}`
+        }`}
+        title={isCameraActive ? 'Turn off camera vision (stops webcam)' : 'Turn on camera vision (see expressions & surroundings)'}
+      >
+        {isCameraActive ? <Video className="w-4 h-4" /> : <VideoOff className="w-4 h-4 opacity-75" />}
       </button>
 
       {/* Mic Mute / Unmute Keycap */}

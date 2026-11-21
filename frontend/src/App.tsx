@@ -7,6 +7,7 @@ import { TopStatusPill } from './components/TopStatusPill';
 import { SubtitlePills } from './components/SubtitlePills';
 import { BottomDock } from './components/BottomDock';
 import { SettingsDrawer } from './components/SettingsDrawer';
+import { CameraPreview } from './components/CameraPreview';
 
 const DEFAULT_CONFIG: PersonaConfig = {
   voice: 'Aoede',
@@ -49,6 +50,13 @@ export const App: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [config, setConfig] = useState<PersonaConfig>(DEFAULT_CONFIG);
 
+  // Webcam Vision State & Lifecycle Refs
+  const [isCameraActive, setIsCameraActive] = useState(false);
+  const [lastFramePulse, setLastFramePulse] = useState(0);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const frameIntervalRef = useRef<number | null>(null);
+
   // Refs for low-latency lifecycle management
   const audioEngineRef = useRef<AudioEngine | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
@@ -59,7 +67,7 @@ export const App: React.FC = () => {
   const configRef = useRef<PersonaConfig>(config);
   configRef.current = config;
 
-  // Initialize AudioEngine instance once
+  // Initialize AudioEngine and cleanup on unmount
   useEffect(() => {
     audioEngineRef.current = new AudioEngine();
     return () => {
@@ -68,6 +76,12 @@ export const App: React.FC = () => {
       }
       if (animFrameRef.current) {
         cancelAnimationFrame(animFrameRef.current);
+      }
+      if (frameIntervalRef.current) {
+        clearInterval(frameIntervalRef.current);
+      }
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
       }
     };
   }, []);
@@ -149,6 +163,91 @@ export const App: React.FC = () => {
       return next;
     });
   }, []);
+
+  // Toggle Webcam Vision cleanly (stops all MediaStreamTracks so LED goes off)
+  const handleToggleCamera = useCallback(async () => {
+    if (isCameraActive) {
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+        mediaStreamRef.current = null;
+      }
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
+      if (frameIntervalRef.current) {
+        clearInterval(frameIntervalRef.current);
+        frameIntervalRef.current = null;
+      }
+      setIsCameraActive(false);
+    } else {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' },
+          audio: false,
+        });
+        mediaStreamRef.current = stream;
+        setIsCameraActive(true);
+        setTimeout(() => {
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+            videoRef.current.play().catch((err) => console.warn('Video play error:', err));
+          }
+        }, 50);
+      } catch (err) {
+        console.error('[Webcam] Access denied or unavailable:', err);
+        alert('Camera access was denied or is unavailable on this device.');
+      }
+    }
+  }, [isCameraActive]);
+
+  // 1 FPS Video Frame Capture Pipeline for Gemini Multimodal Live Vision
+  useEffect(() => {
+    if (!isCameraActive || connectionState !== 'connected') {
+      if (frameIntervalRef.current) {
+        clearInterval(frameIntervalRef.current);
+        frameIntervalRef.current = null;
+      }
+      return;
+    }
+
+    const offscreenCanvas = document.createElement('canvas');
+
+    frameIntervalRef.current = window.setInterval(() => {
+      const video = videoRef.current;
+      const ws = wsRef.current;
+      if (!video || video.readyState < 2 || !ws || ws.readyState !== WebSocket.OPEN) {
+        return;
+      }
+
+      try {
+        const targetWidth = 512;
+        const targetHeight = Math.round((video.videoHeight / (video.videoWidth || 1)) * targetWidth) || 512;
+        offscreenCanvas.width = targetWidth;
+        offscreenCanvas.height = targetHeight;
+        const ctx = offscreenCanvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(video, 0, 0, targetWidth, targetHeight);
+          const jpegDataUrl = offscreenCanvas.toDataURL('image/jpeg', 0.75);
+          ws.send(
+            JSON.stringify({
+              type: 'video_frame',
+              data: jpegDataUrl,
+            })
+          );
+          setLastFramePulse(Date.now());
+        }
+      } catch (err) {
+        console.warn('[Video Pipeline] Frame capture error:', err);
+      }
+    }, 1000); // Exactly 1 FPS optimal for Gemini Multimodal Live
+
+    return () => {
+      if (frameIntervalRef.current) {
+        clearInterval(frameIntervalRef.current);
+        frameIntervalRef.current = null;
+      }
+    };
+  }, [isCameraActive, connectionState]);
 
   // Connect to backend WebSocket and initialize Audio Worklet
   const handleConnect = useCallback(async (overrideConfig?: PersonaConfig) => {
@@ -397,16 +496,28 @@ export const App: React.FC = () => {
         </div>
       </main>
 
+      {/* Real-Time Hardware Webcam Vision PiP Monitor */}
+      <CameraPreview
+        videoRef={videoRef}
+        isActive={isCameraActive}
+        isStreaming={isCameraActive && connectionState === 'connected'}
+        lastFramePulse={lastFramePulse}
+        onClose={handleToggleCamera}
+        theme={theme}
+      />
+
       {/* Footer: Hardware Synth Bottom Dock */}
       <footer className="w-full flex items-center justify-center pb-1 z-20">
         <BottomDock
           connectionState={connectionState}
           isMuted={isMuted}
           isSpeakerMode={isSpeakerMode}
+          isCameraActive={isCameraActive}
           theme={theme}
           onToggleConnect={connectionState === 'connected' ? handleDisconnect : handleConnect}
           onToggleMute={handleToggleMute}
           onToggleSpeakerMode={handleToggleSpeakerMode}
+          onToggleCamera={handleToggleCamera}
           onSendTextPrompt={handleSendTextPrompt}
           onOpenSettings={() => setIsSettingsOpen(true)}
         />
