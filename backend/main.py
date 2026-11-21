@@ -152,6 +152,7 @@ async def voice_websocket(
                 try:
                     while True:
                         try:
+                            current_bot_transcript = ""
                             async for response in session.receive():
                                 sc = response.server_content
                                 if not sc:
@@ -160,6 +161,7 @@ async def voice_websocket(
                                 # 1. Barge-In Interruption Event
                                 if sc.interrupted:
                                     logger.info("Gemini reported user interruption (barge-in).")
+                                    current_bot_transcript = ""
                                     await websocket.send_json({"type": "interrupted"})
 
                                 # 2. Real-time User Audio Transcription
@@ -170,29 +172,49 @@ async def voice_websocket(
                                         "finished": getattr(sc.input_transcription, "finished", False),
                                     })
 
-                                # 3. Real-time Bot Output Audio Transcription
+                                # 3. Real-time Bot Output Audio Transcription with Suffix/Delta Deduplication
                                 if sc.output_transcription and sc.output_transcription.text:
-                                    await websocket.send_json({
-                                        "type": "bot_transcript",
-                                        "text": sc.output_transcription.text,
-                                        "finished": getattr(sc.output_transcription, "finished", False),
-                                    })
+                                    incoming_text = sc.output_transcription.text
+                                    finished = getattr(sc.output_transcription, "finished", False)
+                                    if incoming_text:
+                                        # Guard against full-string replay or cumulative prefix duplicates
+                                        if incoming_text == current_bot_transcript:
+                                            # Exact duplicate recap, discard
+                                            pass
+                                        elif current_bot_transcript and incoming_text.startswith(current_bot_transcript):
+                                            # Cumulative transcript update: extract and send only the new delta suffix
+                                            delta = incoming_text[len(current_bot_transcript):]
+                                            current_bot_transcript = incoming_text
+                                            if delta.strip():
+                                                await websocket.send_json({
+                                                    "type": "bot_transcript",
+                                                    "text": delta,
+                                                    "finished": finished,
+                                                })
+                                        elif current_bot_transcript and current_bot_transcript.endswith(incoming_text.strip()):
+                                            # Duplicate chunk already included
+                                            pass
+                                        else:
+                                            # Incremental text chunk
+                                            current_bot_transcript += incoming_text
+                                            await websocket.send_json({
+                                                "type": "bot_transcript",
+                                                "text": incoming_text,
+                                                "finished": finished,
+                                            })
 
                                 # 4. Raw Binary PCM Audio Stream (Zero Base64 overhead)
+                                # Note: Do NOT stream part.text as bot_transcript because output_transcription
+                                # already delivers the real-time audio transcript. Streaming both causes duplicate speech bubbles.
                                 if sc.model_turn and sc.model_turn.parts:
                                     for part in sc.model_turn.parts:
                                         if part.inline_data and part.inline_data.data:
                                             await websocket.send_bytes(part.inline_data.data)
-                                        elif part.text:
-                                            await websocket.send_json({
-                                                "type": "bot_transcript",
-                                                "text": part.text,
-                                                "finished": False,
-                                            })
 
                                 # 5. Turn Complete Event
                                 if sc.turn_complete:
                                     logger.info("Turn complete from Gemini. Remaining alive for subsequent turns.")
+                                    current_bot_transcript = ""
                                     await websocket.send_json({"type": "turn_complete"})
 
                             # The generator session.receive() ended for this interaction

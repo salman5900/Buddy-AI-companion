@@ -1,14 +1,18 @@
 // AudioWorkletProcessor to capture mic audio, downsample to 16kHz mono, and convert to 16-bit PCM
 class PCMProcessor extends AudioWorkletProcessor {
-  constructor() {
+  constructor(options) {
     super();
     this.targetRate = 16000;
+    const inputRate =
+      (options && options.processorOptions && options.processorOptions.inputSampleRate) ||
+      (typeof sampleRate !== 'undefined' ? sampleRate : 48000);
+    this.inputRate = inputRate;
     this.chunkSize = 512; // 32ms chunks at 16kHz (1024 bytes)
     this.outputBuffer = new Int16Array(this.chunkSize);
     this.outputIndex = 0;
 
     // Resampling state
-    this.resampleRatio = sampleRate / this.targetRate;
+    this.resampleRatio = this.inputRate / this.targetRate;
     this.resampleIndex = 0.0;
     this.prevSample = 0.0;
   }
@@ -22,7 +26,7 @@ class PCMProcessor extends AudioWorkletProcessor {
     const channelData = input[0];
 
     // Case 1: Browser context is already 16kHz
-    if (Math.abs(sampleRate - this.targetRate) < 1) {
+    if (Math.abs(this.inputRate - this.targetRate) < 1) {
       for (let i = 0; i < channelData.length; i++) {
         const s = Math.max(-1, Math.min(1, channelData[i]));
         this.outputBuffer[this.outputIndex++] = s < 0 ? s * 0x8000 : s * 0x7FFF;

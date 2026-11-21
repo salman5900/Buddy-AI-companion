@@ -14,6 +14,7 @@ export class AudioEngine {
   private micStream: MediaStream | null = null;
   private micSource: MediaStreamAudioSourceNode | null = null;
   private workletNode: AudioWorkletNode | null = null;
+  private silentGain: GainNode | null = null;
   private micAnalyser: AnalyserNode | null = null;
   private micDataArray: Uint8Array | null = null;
 
@@ -57,8 +58,14 @@ export class AudioEngine {
    */
   public async startCapture(onPcmChunk: (chunk: ArrayBuffer) => void): Promise<void> {
     this.onPcmDataCallback = onPcmChunk;
+    this.isBotPlaying = false;
+    this.nextPlayTime = 0;
+    if (this.tailTimeout !== null) {
+      clearTimeout(this.tailTimeout);
+      this.tailTimeout = null;
+    }
 
-    // Request audio stream with browser processing flags optimized for speech
+    // 1. Request microphone stream with voice-optimized constraints
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: {
         channelCount: 1,
@@ -69,9 +76,11 @@ export class AudioEngine {
     });
 
     this.micStream = stream;
+    const audioTrack = stream.getAudioTracks()[0];
 
-    // Use default browser audio context sample rate to avoid hardware mismatch,
-    // the pcm-processor.js worklet smoothly downsamples whatever rate to 16kHz
+    // 2. Initialize AudioContext at the BROWSER'S NATIVE SAMPLE RATE (e.g. 48000Hz or 44100Hz).
+    // NEVER pass { sampleRate: 16000 } here! In Firefox, connecting a 48kHz MediaStreamSource
+    // to a 16kHz AudioContext throws NotSupportedError and kills audio.
     const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     this.captureCtx = new AudioContextClass();
 
@@ -79,35 +88,61 @@ export class AudioEngine {
       await this.captureCtx.resume();
     }
 
-    // Load AudioWorklet downsampler
+    // 3. Load AudioWorklet downsampler module
     await this.captureCtx.audioWorklet.addModule('/pcm-processor.js');
 
+    // 4. Create source node and worklet node, passing native input sample rate
     this.micSource = this.captureCtx.createMediaStreamSource(stream);
-    this.workletNode = new AudioWorkletNode(this.captureCtx, 'pcm-processor');
+    this.workletNode = new AudioWorkletNode(this.captureCtx, 'pcm-processor', {
+      processorOptions: {
+        inputSampleRate: this.captureCtx.sampleRate,
+      },
+    });
 
-    // Create Mic Analyser for RMS volume
+    // 5. Create Mic Analyser for RMS volume
     this.micAnalyser = this.captureCtx.createAnalyser();
     this.micAnalyser.fftSize = 256;
     this.micAnalyser.smoothingTimeConstant = 0.3;
     this.micDataArray = new Uint8Array(this.micAnalyser.frequencyBinCount);
 
-    // Pipe audio to worklet and analyser
+    // 6. CRITICAL FOR FIREFOX:
+    // Connect workletNode and micAnalyser to a silent GainNode (gain = 0) -> captureCtx.destination!
+    // In Firefox, if a Web Audio node graph has no path to destination, the audio thread
+    // prunes the branch: process() is never called and AnalyserNode reads all 0s.
+    this.silentGain = this.captureCtx.createGain();
+    this.silentGain.gain.value = 0;
+
     this.micSource.connect(this.workletNode);
     this.micSource.connect(this.micAnalyser);
 
-    // Listen for 16kHz 16-bit PCM chunks (512 samples = 32ms)
+    this.workletNode.connect(this.silentGain);
+    this.micAnalyser.connect(this.silentGain);
+    this.silentGain.connect(this.captureCtx.destination);
+
+    // 7. Explicitly resume capture context after nodes are connected
+    if (this.captureCtx.state !== 'running') {
+      await this.captureCtx.resume();
+    }
+
+    console.log(
+      `[AudioEngine] Mic active: sampleRate=${this.captureCtx.sampleRate}, trackState=${audioTrack?.readyState}, label="${audioTrack?.label}"`
+    );
+
+    // 8. Listen for 16kHz 16-bit PCM chunks (512 samples = 32ms)
+    let pcmChunkCount = 0;
     this.workletNode.port.onmessage = (event: MessageEvent<ArrayBuffer>) => {
       if (this.isMuted || !this.onPcmDataCallback) {
         return;
       }
 
-      // Acoustic Echo Gate (Half-Duplex Speaker Protection):
-      // In Speaker Mode (default), while the bot is actively playing audio (or within
-      // the 250ms room echo tail), DROP all microphone frames so speakers never leak
-      // into the microphone and cause Gemini to self-interrupt mid-sentence!
-      // In Headphones Mode (full duplex), audio is streamed continuously for hands-free voice barge-in.
+      // Half-duplex speaker echo protection
       if (this.isSpeakerMode && this.isBotPlaying) {
         return;
+      }
+
+      pcmChunkCount++;
+      if (pcmChunkCount === 1 || pcmChunkCount % 150 === 0) {
+        console.log(`[AudioEngine] Streaming PCM chunk #${pcmChunkCount} (${event.data.byteLength} bytes)`);
       }
 
       this.onPcmDataCallback(event.data);
@@ -299,6 +334,11 @@ export class AudioEngine {
     if (this.micSource) {
       this.micSource.disconnect();
       this.micSource = null;
+    }
+
+    if (this.silentGain) {
+      this.silentGain.disconnect();
+      this.silentGain = null;
     }
 
     if (this.captureCtx && this.captureCtx.state !== 'closed') {

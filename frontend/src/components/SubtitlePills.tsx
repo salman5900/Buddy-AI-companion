@@ -9,6 +9,18 @@ interface SubtitlePillsProps {
   theme: ThemeConfig;
 }
 
+function cleanDisplayTranscript(text: string): string {
+  if (!text) return '';
+  const trimmed = text.trim();
+  const halfLen = Math.floor(trimmed.length / 2);
+  const firstHalf = trimmed.slice(0, halfLen).trim();
+  const secondHalf = trimmed.slice(halfLen).trim();
+  if (firstHalf && firstHalf === secondHalf) {
+    return firstHalf;
+  }
+  return text;
+}
+
 export const SubtitlePills: React.FC<SubtitlePillsProps> = ({
   userTranscript,
   botTranscript,
@@ -16,7 +28,9 @@ export const SubtitlePills: React.FC<SubtitlePillsProps> = ({
   isBotSpeaking,
   theme,
 }) => {
-  if (!userTranscript && !botTranscript) {
+  const displayBotTranscript = cleanDisplayTranscript(botTranscript);
+
+  if (!userTranscript && !displayBotTranscript) {
     return (
       <div className="h-16 flex items-center justify-center pointer-events-none">
         <p className="font-mono text-[11px] tracking-wider uppercase opacity-40" style={{ color: theme.isDark ? '#B8AEA6' : '#52525B' }}>

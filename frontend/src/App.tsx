@@ -16,6 +16,39 @@ const DEFAULT_CONFIG: PersonaConfig = {
   systemInstruction: DEFAULT_PERSONA_INSTRUCTION,
 };
 
+/**
+ * Deduplicate and intelligently merge incoming bot transcript stream chunks.
+ * Prevents full-string replays, cumulative recap prefix duplicates, and overlapping tokens.
+ */
+function appendBotTranscript(prev: string, incoming: string): string {
+  const cleanIncoming = incoming.trim();
+  if (!cleanIncoming) return prev;
+  const cleanPrev = prev.trim();
+  if (!cleanPrev) return cleanIncoming;
+
+  if (cleanPrev === cleanIncoming || cleanPrev.endsWith(cleanIncoming)) {
+    return prev;
+  }
+  if (cleanIncoming.startsWith(cleanPrev)) {
+    return cleanIncoming;
+  }
+  if (cleanIncoming.length > 8 && cleanPrev.includes(cleanIncoming)) {
+    return prev;
+  }
+  let overlap = 0;
+  const maxCheck = Math.min(cleanPrev.length, cleanIncoming.length);
+  for (let i = maxCheck; i >= 3; i--) {
+    if (cleanPrev.endsWith(cleanIncoming.slice(0, i))) {
+      overlap = i;
+      break;
+    }
+  }
+  if (overlap > 0) {
+    return cleanPrev + cleanIncoming.slice(overlap);
+  }
+  return `${cleanPrev} ${cleanIncoming}`.replace(/\s+/g, ' ');
+}
+
 export const App: React.FC = () => {
   // Connection and Voice States
   const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
@@ -71,6 +104,20 @@ export const App: React.FC = () => {
   useEffect(() => {
     audioEngineRef.current = new AudioEngine();
     return () => {
+      if (wsRef.current) {
+        wsRef.current.onopen = null;
+        wsRef.current.onmessage = null;
+        wsRef.current.onerror = null;
+        wsRef.current.onclose = null;
+        try {
+          wsRef.current.close();
+        } catch (_) {}
+        wsRef.current = null;
+      }
+      if (pingIntervalRef.current) {
+        clearInterval(pingIntervalRef.current);
+        pingIntervalRef.current = null;
+      }
       if (audioEngineRef.current) {
         audioEngineRef.current.cleanup();
       }
@@ -269,7 +316,18 @@ export const App: React.FC = () => {
         setVoiceState((prev) => (prev === 'speaking' ? 'listening' : prev));
       });
 
-      // 2. Open WebSocket to backend
+      // 2. Open WebSocket to backend (closing any stale connection first)
+      if (wsRef.current) {
+        wsRef.current.onopen = null;
+        wsRef.current.onmessage = null;
+        wsRef.current.onerror = null;
+        wsRef.current.onclose = null;
+        try {
+          wsRef.current.close();
+        } catch (_) {}
+        wsRef.current = null;
+      }
+
       const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const wsHost = window.location.hostname || 'localhost';
       const backendPort = import.meta.env.VITE_BACKEND_PORT || '8000';
@@ -283,9 +341,19 @@ export const App: React.FC = () => {
       wsRef.current = ws;
 
       ws.onopen = async () => {
+        // Ensure engine is unmuted and speaker mode is synchronized
+        engine.setMuted(isMuted);
+        engine.setSpeakerMode(isSpeakerMode);
+
+        console.log('[WebSocket] Connected. Initializing microphone capture pipeline...');
+        let pcmSentCount = 0;
         // 3. Start 16kHz microphone capture via AudioWorklet
         await engine.startCapture((pcmChunk: ArrayBuffer) => {
           if (ws.readyState === WebSocket.OPEN) {
+            pcmSentCount++;
+            if (pcmSentCount === 1 || pcmSentCount % 150 === 0) {
+              console.log(`[WebSocket] Forwarded PCM chunk #${pcmSentCount} (${pcmChunk.byteLength} bytes) to backend`);
+            }
             ws.send(pcmChunk);
           }
         });
@@ -343,7 +411,7 @@ export const App: React.FC = () => {
 
             case 'bot_transcript':
               if (msg.text) {
-                setBotTranscript((prev) => (prev ? `${prev} ${msg.text}` : msg.text || ''));
+                setBotTranscript((prev) => appendBotTranscript(prev, msg.text!));
                 setVoiceState('speaking');
               }
               break;
