@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Sparkles, Volume2, Box, Check, Radio, Monitor, Disc, Cpu, Shield } from 'lucide-react';
+import { X, Sparkles, Volume2, Box, Check, Radio, Monitor, Disc, Cpu, Shield, Gamepad2, Tv, Sliders } from 'lucide-react';
 import { VoiceName, PersonaConfig, ThemeConfig, ChassisDesignId, DEFAULT_PERSONA_INSTRUCTION } from '../types';
 
 export { DEFAULT_PERSONA_INSTRUCTION };
@@ -70,6 +70,27 @@ const CHASSIS_DESIGNS: {
     tag: 'Tactical Cyber',
     desc: 'Faceted sci-fi robot chassis with reinforced corner armor plates, Torx bolts, and telemetry status.',
     icon: Shield,
+  },
+  {
+    id: 'arcade',
+    name: 'Retro Arcade Handheld',
+    tag: '8-Bit Retro',
+    desc: 'Vintage mini cabinet with directional D-pad cross, round A/B keycaps, and coin slot.',
+    icon: Gamepad2,
+  },
+  {
+    id: 'spacetv',
+    name: '70s Space-Age TV',
+    tag: 'Orb Television',
+    desc: 'Space-age spherical television pod with chrome V-dipole antenna and circular bubble screen.',
+    icon: Tv,
+  },
+  {
+    id: 'synth',
+    name: 'Eurorack Modular Synth',
+    tag: 'Audio Rackmount',
+    desc: 'Modular sound rack with gold mini patch sockets, twin stereo LED VU meters, and slider fader.',
+    icon: Sliders,
   },
 ];
 

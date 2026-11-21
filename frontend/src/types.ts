@@ -1,4 +1,13 @@
-export type ChassisDesignId = 'cube' | 'terminal' | 'capsule' | 'boombox' | 'radio' | 'mech';
+export type ChassisDesignId =
+  | 'cube'
+  | 'terminal'
+  | 'capsule'
+  | 'boombox'
+  | 'radio'
+  | 'mech'
+  | 'arcade'
+  | 'spacetv'
+  | 'synth';
 
 export interface ChassisDesign {
   id: ChassisDesignId;
@@ -11,7 +20,7 @@ export type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'err
 
 export type VoiceState = 'idle' | 'listening' | 'thinking' | 'speaking' | 'interrupted';
 
-export type ThemeId = 'studio' | 'midnight' | 'matcha';
+export type ThemeId = 'studio' | 'midnight' | 'matcha' | 'cyber' | 'solar' | 'lunar';
 
 export interface ThemeConfig {
   id: ThemeId;

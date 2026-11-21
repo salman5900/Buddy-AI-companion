@@ -85,7 +85,7 @@ export const TopStatusPill: React.FC<TopStatusPillProps> = ({
         MOD-3.8
       </div>
 
-      {/* Compact 3-Dot Hardware Theme Switcher */}
+      {/* Compact 6-Dot Hardware Theme Switcher */}
       <div className="flex items-center gap-1.5 pl-2 border-l border-black/15">
         {/* Studio Cream */}
         <button
@@ -121,6 +121,42 @@ export const TopStatusPill: React.FC<TopStatusPillProps> = ({
               : 'border-[#1F2D2A]/40 hover:scale-105'
           }`}
           style={{ backgroundColor: '#E4EAE1' }}
+        />
+
+        {/* Cyberpunk Neon */}
+        <button
+          onClick={() => onSelectTheme('cyber')}
+          title="Cyberpunk Neon (Akihabara)"
+          className={`w-3.5 h-3.5 rounded-full border transition-all ${
+            activeThemeId === 'cyber'
+              ? 'ring-2 ring-[#06B6D4] scale-110 border-[#EDE8FA]'
+              : 'border-[#3D2C66] hover:scale-105'
+          }`}
+          style={{ backgroundColor: '#181326' }}
+        />
+
+        {/* Playdate Solar */}
+        <button
+          onClick={() => onSelectTheme('solar')}
+          title="Playdate Solar (Yellow)"
+          className={`w-3.5 h-3.5 rounded-full border transition-all ${
+            activeThemeId === 'solar'
+              ? 'ring-2 ring-[#EA580C] scale-110 border-[#18181B]'
+              : 'border-[#18181B]/40 hover:scale-105'
+          }`}
+          style={{ backgroundColor: '#FEEF72' }}
+        />
+
+        {/* Lunar Titanium */}
+        <button
+          onClick={() => onSelectTheme('lunar')}
+          title="Lunar Titanium (Apollo Aerospace)"
+          className={`w-3.5 h-3.5 rounded-full border transition-all ${
+            activeThemeId === 'lunar'
+              ? 'ring-2 ring-[#2563EB] scale-110 border-[#0F172A]'
+              : 'border-[#334155]/50 hover:scale-105'
+          }`}
+          style={{ backgroundColor: '#DCE3EC' }}
         />
       </div>
     </header>

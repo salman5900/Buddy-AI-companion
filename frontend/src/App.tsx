@@ -37,7 +37,7 @@ export const App: React.FC = () => {
   // Settings, Theme & Configuration
   const [activeThemeId, setActiveThemeId] = useState<ThemeId>(() => {
     const saved = localStorage.getItem('ai_buddy_theme');
-    return (saved === 'studio' || saved === 'midnight' || saved === 'matcha') ? saved : 'studio';
+    return (saved === 'studio' || saved === 'midnight' || saved === 'matcha' || saved === 'cyber' || saved === 'solar' || saved === 'lunar') ? saved : 'studio';
   });
 
   const handleSelectTheme = (id: ThemeId) => {

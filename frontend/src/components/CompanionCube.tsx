@@ -487,6 +487,230 @@ function renderChassisBody({
       );
 
     // ----------------------------------------------------
+    // 7. RETRO ARCADE TABLETOP HANDHELD
+    // ----------------------------------------------------
+    case 'arcade':
+      return (
+        <div
+          className={`relative w-68 h-72 rounded-3xl ${theme.chassisBg} border-[1.5px] ${theme.chassisBorder} p-3.5 shadow-[0_16px_36px_rgba(0,0,0,0.18),inset_0_1px_0_rgba(255,255,255,0.4),inset_0_-4px_0_rgba(0,0,0,0.2)] flex flex-col justify-between`}
+        >
+          {/* Top Marquee Header Bar */}
+          <div className="flex items-center justify-between px-2.5 py-1 rounded-lg border border-black/30 bg-black/10 shadow-inner">
+            <span className="text-[9px] font-mono font-bold tracking-widest uppercase opacity-80">
+              ARCADE // 8-BIT
+            </span>
+            <div className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-xs animate-pulse" style={{ backgroundColor: activeColor }} />
+              <span className="text-[7.5px] font-mono opacity-60">HI-SCORE</span>
+            </div>
+          </div>
+
+          {/* Recessed Curved Screen */}
+          <div className="w-full h-42 rounded-xl overflow-hidden relative shadow-[inset_0_4px_12px_rgba(0,0,0,0.9)] my-1">
+            {renderOledFaceScreen({
+              theme,
+              voiceState,
+              botVolume,
+              micVolume,
+              activeColor,
+              activeAudioVol,
+              blink,
+              customModelLabel: 'ARCADE-84',
+              roundedClass: 'rounded-xl',
+            })}
+          </div>
+
+          {/* Bottom Controller Deck */}
+          <div className="flex items-center justify-between px-2 pt-1 border-t border-black/15">
+            {/* Directional Cross D-Pad */}
+            <div className="relative w-11 h-11 flex items-center justify-center">
+              <div className="absolute w-3.5 h-10 rounded-sm bg-black/75 shadow-xs" />
+              <div className="absolute w-10 h-3.5 rounded-sm bg-black/75 shadow-xs" />
+              <div className="absolute w-3 h-3 rounded-full bg-zinc-800" />
+            </div>
+
+            {/* Quarter Coin Slot */}
+            <div className="flex flex-col items-center gap-0.5">
+              <div className="w-1.5 h-5 rounded-xs bg-black/80 border border-black/40 shadow-inner flex items-center justify-center" />
+              <span className="text-[6.5px] font-mono font-bold opacity-60">25¢ INSERT</span>
+            </div>
+
+            {/* Round A / B Action Buttons */}
+            <div className="flex items-center gap-2 rotate-[-12deg]">
+              {/* B Button */}
+              <div className="flex flex-col items-center gap-0.5">
+                <div className="w-5 h-5 rounded-full border border-black/40 bg-rose-600 shadow-sm flex items-center justify-center active:scale-90 transition-transform">
+                  <span className="text-[8px] font-bold text-white">B</span>
+                </div>
+              </div>
+              {/* A Button */}
+              <div className="flex flex-col items-center gap-0.5 -mt-2">
+                <div className="w-5 h-5 rounded-full border border-black/40 bg-purple-600 shadow-sm flex items-center justify-center active:scale-90 transition-transform">
+                  <span className="text-[8px] font-bold text-white">A</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+
+    // ----------------------------------------------------
+    // 8. 70s SPACE-AGE SPHERE TV (Orb Pod)
+    // ----------------------------------------------------
+    case 'spacetv':
+      return (
+        <div
+          className={`relative w-68 h-72 rounded-[52px] ${theme.chassisBg} border-[1.5px] ${theme.chassisBorder} p-4 shadow-[0_18px_42px_rgba(0,0,0,0.16),inset_0_1px_0_rgba(255,255,255,0.4),inset_0_-5px_0_rgba(0,0,0,0.15)] flex flex-col justify-between items-center`}
+        >
+          {/* Top Chrome Telescoping V-Dipole Antenna */}
+          <div className="absolute -top-4 w-28 flex items-center justify-between pointer-events-none px-1">
+            <div
+              className="flex flex-col items-center origin-bottom transition-transform duration-100"
+              style={{
+                transform: `rotate(-24deg) scaleY(${1 + (voiceState === 'speaking' ? botVolume * 0.15 : 0)})`,
+              }}
+            >
+              <div className="w-2.5 h-2.5 rounded-full border border-black/30 bg-zinc-300 shadow-xs" />
+              <div className="w-1 h-3.5 bg-zinc-400 rounded-full" />
+            </div>
+            <div
+              className="flex flex-col items-center origin-bottom transition-transform duration-100"
+              style={{
+                transform: `rotate(24deg) scaleY(${1 + (voiceState === 'speaking' ? botVolume * 0.15 : 0)})`,
+              }}
+            >
+              <div className="w-2.5 h-2.5 rounded-full border border-black/30 bg-zinc-300 shadow-xs" />
+              <div className="w-1 h-3.5 bg-zinc-400 rounded-full" />
+            </div>
+          </div>
+
+          {/* Center Circular Bubble Screen */}
+          <div className="w-52 h-52 rounded-[42px] overflow-hidden relative shadow-[inset_0_4px_16px_rgba(0,0,0,0.92)] mt-1">
+            {renderOledFaceScreen({
+              theme,
+              voiceState,
+              botVolume,
+              micVolume,
+              activeColor,
+              activeAudioVol,
+              blink,
+              customModelLabel: 'SPACE-TV // 70',
+              roundedClass: 'rounded-[42px]',
+            })}
+          </div>
+
+          {/* Bottom Flared Pedestal Foot */}
+          <div className="flex items-center justify-between w-44 px-3 py-0.5 border-t border-black/15 text-[8px] font-mono opacity-60">
+            <span>UHF / VHF CH-04</span>
+            <span style={{ color: activeColor }}>● COLOR-MATRIX</span>
+          </div>
+        </div>
+      );
+
+    // ----------------------------------------------------
+    // 9. EURORACK MODULAR SYNTH (3U Audio Module)
+    // ----------------------------------------------------
+    case 'synth':
+      return (
+        <div
+          className={`relative w-72 h-68 rounded-xl ${theme.chassisBg} border-[1.5px] ${theme.chassisBorder} p-3.5 shadow-[0_16px_36px_rgba(0,0,0,0.18),inset_0_1px_0_rgba(255,255,255,0.4),inset_0_-3px_0_rgba(0,0,0,0.15)] flex flex-col justify-between`}
+        >
+          {/* Top 3.5mm Gold Mini Patch Jack Bay */}
+          <div className="flex items-center justify-between px-2 pt-0.5 border-b border-black/15 pb-1.5">
+            <span className="font-mono text-[8.5px] font-bold tracking-widest uppercase opacity-80">
+              EURORACK // 3U MOD
+            </span>
+            <div className="flex items-center gap-2">
+              {['IN', 'CV', 'GATE', 'OUT'].map((jackLabel, idx) => (
+                <div key={idx} className="flex flex-col items-center">
+                  <div className="w-3.5 h-3.5 rounded-full border border-[#D97706] bg-black/60 shadow-inner flex items-center justify-center">
+                    <div className="w-1.5 h-1.5 rounded-full bg-black border border-white/20" />
+                  </div>
+                  <span className="text-[6.5px] font-mono opacity-60">{jackLabel}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Middle Synth Section: Left VU + Center Screen + Right VU */}
+          <div className="flex items-center justify-between gap-2.5 my-1">
+            {/* Left Stereo VU-Meter Bar */}
+            <div className="flex flex-col gap-1 py-1 px-1 rounded border border-black/25 bg-black/20 shrink-0">
+              {[0.9, 0.7, 0.5, 0.3, 0.1].map((threshold, idx) => {
+                const isLit = micVolume >= threshold;
+                return (
+                  <div
+                    key={idx}
+                    className="w-1.5 h-2.5 rounded-xs transition-colors duration-75"
+                    style={{
+                      backgroundColor: isLit
+                        ? idx === 0
+                          ? '#EF4444'
+                          : idx === 1
+                          ? '#F59E0B'
+                          : '#10B981'
+                        : 'rgba(0,0,0,0.4)',
+                    }}
+                  />
+                );
+              })}
+            </div>
+
+            {/* Center Recessed Screen */}
+            <div className="flex-1 h-38 rounded-xl overflow-hidden relative shadow-[inset_0_4px_12px_rgba(0,0,0,0.85)]">
+              {renderOledFaceScreen({
+                theme,
+                voiceState,
+                botVolume,
+                micVolume,
+                activeColor,
+                activeAudioVol,
+                blink,
+                customModelLabel: 'SYNTH-VCO',
+                roundedClass: 'rounded-xl',
+              })}
+            </div>
+
+            {/* Right Stereo VU-Meter Bar */}
+            <div className="flex flex-col gap-1 py-1 px-1 rounded border border-black/25 bg-black/20 shrink-0">
+              {[0.9, 0.7, 0.5, 0.3, 0.1].map((threshold, idx) => {
+                const isLit = botVolume >= threshold;
+                return (
+                  <div
+                    key={idx}
+                    className="w-1.5 h-2.5 rounded-xs transition-colors duration-75"
+                    style={{
+                      backgroundColor: isLit
+                        ? idx === 0
+                          ? '#EF4444'
+                          : idx === 1
+                          ? '#F59E0B'
+                          : '#10B981'
+                        : 'rgba(0,0,0,0.4)',
+                    }}
+                  />
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Bottom Slider Potentiometer Fader Track */}
+          <div className="flex items-center justify-between px-2 pt-1 border-t border-black/15 text-[8px] font-mono">
+            <span className="opacity-60">-∞ dB</span>
+            <div className="flex-1 mx-2 h-2 bg-black/20 rounded-full border border-black/30 relative flex items-center">
+              <div
+                className="absolute w-4 h-3 rounded-xs border border-black/50 bg-zinc-300 dark:bg-zinc-600 shadow transition-all duration-75"
+                style={{
+                  left: `${Math.max(5, Math.min(85, 20 + activeAudioVol * 65))}%`,
+                }}
+              />
+            </div>
+            <span className="opacity-60">+6 dB</span>
+          </div>
+        </div>
+      );
+
+    // ----------------------------------------------------
     // DEFAULT: 6. TACTILE CUBE (Classic OP-1 / Braun)
     // ----------------------------------------------------
     case 'cube':
